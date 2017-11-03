@@ -49,14 +49,15 @@ class Circle():
 
 class Rect:
 	def __init__(self):
-		self.pos = {"x": 0,"y": 0}
-		self.size = {"w": 0,"h": 0}
-		self.look = {"c": (0,0,0), "f": 0,"a": 0,"u": 0,"r": 0}
+		self.p0 = {"xy": (0,0)}
+		self.p1 = {"xy": (0,0)}
+		self.p2 = {"xy": (0,0)}
+		self.p3 = {"xy": (0,0)}
+		self.look = {"c": black}
 
 class Line:
 	def __init__(self):
 		self.pos = {"b": (0,0),"e": (0,0)}
-		self.look = {"c": (0,0,0), "f": 1}
 
 ball = pygame.image.load("ball.png")
 shadow = pygame.image.load("shadow.png")
@@ -82,7 +83,7 @@ def circlef():
 		nnrect = nnball.get_rect()
 		nnrect.center = (round(circle.pos["x"]), round(circle.pos["y"]))
 		game_display.blit(nnball, nnrect)
-
+"""
 grass = pygame.image.load("grass.png")
 def rectf():
 	for rect in rects:
@@ -93,12 +94,13 @@ def rectf():
 				x = (rect.pos["x"]-(rect.size["w"]/2))+(rect.size["w"]/rect.look["a"])*j
 				y = (rect.pos["y"]-(rect.size["h"]/2))+(rect.size["h"]/rect.look["u"])*i
 				game_display.blit(ngrass, (x,y))
+"""
+
 pointlist = []
-def linef():
-	for line in lines:
-		pointlist.append(line.pos["b"])
-		pygame.draw.line(game_display, line.look["c"], line.pos["b"], line.pos["e"], line.look["f"])
-	pygame.draw.polygon(game_display, green, pointlist, 0)
+def rectf():
+	for rect in rects:
+		pointlist = [rect.p0["xy"],rect.p1["xy"],rect.p2["xy"],rect.p3["xy"]]
+		pygame.draw.polygon(game_display, rect.look["c"], pointlist, 0)
 
 def conc_circles(c1, c2):
 	m1 = c1.mass["m"]
@@ -157,7 +159,7 @@ def check_walls():
 			circle.pos["x"] = circle.rad["r"]
 		if((circle.pos["x"]+circle.rad["r"])==display_width or (circle.pos["x"]-circle.rad["r"])==0):
 			circle.vel["x"] *= -Cr
-
+"""
 def check_rects():
 		for rect in rects:
 				rx = rect.pos["x"]+(rect.size["w"]/2)
@@ -181,35 +183,51 @@ def check_rects():
 							circle.vel["x"] *= -Cr
 						if (((cy-circle.rad["r"])==by and cx>=lx and cx<=rx) or ((cy+circle.rad["r"])==ty and cx>=lx and cx<=rx)):
 							circle.vel["y"] *= -Cr
+"""
 
 def check_lines():
 	for circle in circles:
 		for line in lines:
 			chx = line.pos["e"][0]-line.pos["b"][0]
 			chy = line.pos["e"][1]-line.pos["b"][1]
-			m = (chy/chx)
 			ah = math.atan2(abs(chy),abs(chx))
 			av = math.atan2(abs(chx),abs(chy))
-			nm = -(1/m)
 			bx = line.pos["b"][0]
 			by = line.pos["b"][1]
 			cx = circle.pos["x"]
 			cy = circle.pos["y"]
-			x = (m*bx - by - nm*cx + cy)/(m-nm)
-			y = (m*(x-bx))+by
-			leng = ((x-cx)**2+(y-cy)**2)**0.5
+			if chx!=0 and chy!=0:
+				m = (chy/chx)
+				nm = -(1/m)
+				x = (m*bx - by - nm*cx + cy)/(m-nm)
+				y = (m*(x-bx))+by
+				leng = ((x-cx)**2+(y-cy)**2)**0.5
+			elif chx==0:
+				leng = bx-cx
+			else:
+				leng = by-cy
 			if circle.pos["x"]-circle.rad["r"] < line.pos["e"][0] and circle.pos["x"]+circle.rad["r"] > line.pos["b"][0]:
 				if (leng < circle.rad["r"]):
-					if y>circle.pos["y"]:
-						circle.pos["x"] -= ((circle.rad["r"]-leng)*math.cos((math.pi/2)-ah))
-						circle.pos["y"] -= ((circle.rad["r"]-leng)*math.sin((math.pi/2)-ah))
-						o = math.atan2(circle.vel["x"],circle.vel["y"])+ah
-						no = math.atan2(Cr*math.sin(o),math.cos(o))
-						v1 = (circle.vel["x"]**2+circle.vel["y"]**2)**0.5
-						v2 = ((v1*math.cos(o))**2 + (v1*math.sin(o))**2)**0.5
-						circle.vel["x"] = -(v2*math.cos((math.pi/2)-(no+av)))
-						circle.vel["y"] = v2*math.sin((math.pi/2)-(no+av))
-					else:
+					try:
+						if y>circle.pos["y"]:
+							circle.pos["x"] -= ((circle.rad["r"]-leng)*math.cos((math.pi/2)-ah))
+							circle.pos["y"] -= ((circle.rad["r"]-leng)*math.sin((math.pi/2)-ah))
+							o = math.atan2(circle.vel["x"],circle.vel["y"])+ah
+							no = math.atan2(Cr*math.sin(o),math.cos(o))
+							v1 = (circle.vel["x"]**2+circle.vel["y"]**2)**0.5
+							v2 = ((v1*math.cos(o))**2 + (v1*math.sin(o))**2)**0.5
+							circle.vel["x"] = -(v2*math.cos((math.pi/2)-(no+av)))
+							circle.vel["y"] = v2*math.sin((math.pi/2)-(no+av))
+						else:
+							circle.pos["x"] += ((circle.rad["r"]-leng)*math.cos((math.pi/2)-ah))
+							circle.pos["y"] += ((circle.rad["r"]-leng)*math.sin((math.pi/2)-ah))
+							o = math.atan2(circle.vel["x"],circle.vel["y"])+ah
+							no = math.atan2(Cr*math.sin(o),math.cos(o))
+							v1 = (circle.vel["x"]**2+circle.vel["y"]**2)**0.5
+							v2 = ((v1*math.cos(o))**2 + (v1*math.sin(o))**2)**0.5
+							circle.vel["x"] = -(v2*math.cos((math.pi/2)-(no+av)))
+							circle.vel["y"] = v2*math.sin((math.pi/2)-(no+av))
+					except:
 						circle.pos["x"] += ((circle.rad["r"]-leng)*math.cos((math.pi/2)-ah))
 						circle.pos["y"] += ((circle.rad["r"]-leng)*math.sin((math.pi/2)-ah))
 						o = math.atan2(circle.vel["x"],circle.vel["y"])+ah
@@ -223,10 +241,9 @@ def draw():
 	game_display.fill(blue)
 	check_circles()
 	check_walls()
-	check_rects()
+	#check_rects()
 	check_lines()
 	rectf()
-	linef()
 	circlef()
 	pygame.display.flip()
 
@@ -242,7 +259,30 @@ def myDown():
 	c.look["c"] = white
 	circles.append(c)
 	#sound.play(loops = 0)
-	
+
+#bx,by,ex,ey,c
+#u,r,b,l
+line_info = [[50,300,150,200,green], [150,200,160,210], [60,310,160,210], [50,300,60,310]
+			, [0,display_height-50,display_width,display_height-50,green], [display_width,display_height-50,display_width,display_height], [0,display_height,display_width,display_height], [0,display_height-50,0,display_height]
+			, [display_width/2-50,display_height/2-50,display_width/2+50,display_height/2-50,green], [display_width/2+50,display_height/2-50,display_width/2+50,display_height/2+50], [display_width/2-50,display_height/2+50,display_width/2+50,display_height/2+50], [display_width/2-50,display_height/2-50,display_width/2-50,display_height/2+50]
+			]
+
+for i in range(0,len(line_info),4):
+	r = Rect()
+	r.p0["xy"] = (line_info[i][0],line_info[i][1])
+	r.p1["xy"] = (line_info[i][2],line_info[i][3])
+	r.p2["xy"] = (line_info[i+1][2],line_info[i+1][3])
+	r.p3["xy"] = (line_info[i+2][0],line_info[i+2][1])
+	r.look["c"] = line_info[i][4]
+	rects.append(r)
+
+for j in range(len(line_info)):
+	l = Line()
+	l.pos["b"] = (line_info[i][0],line_info[i][1])
+	l.pos["e"] = (line_info[i][2],line_info[i][3])
+	lines.append(l)
+
+"""
 #x,y,h,w,c,a,u,r
 rects_info = [[display_width/2,display_height-25,50,display_width,green,16,1,0], [display_width/2,display_height/2,100,100,green,2,2,45]]
 
@@ -257,17 +297,7 @@ for i in range(len(rects_info)):
 		r.look["u"] = rects_info[i][6]
 		r.look["r"] = rects_info[i][7]
 		rects.append(r)
-
-#bx,by,ex,ey,c,f
-line_info = [[50,300,150,200,black,1], [150,200,160,210,black,1], [60,310,160,210,black,1], [50,300,60,310,black,1]]
-
-for i in range(len(line_info)):
-		l = Line()
-		l.pos["b"] = (line_info[i][0],line_info[i][1])
-		l.pos["e"] = (line_info[i][2],line_info[i][3])
-		l.look["c"] = line_info[i][4]
-		l.look["f"] = line_info[i][5]
-		lines.append(l)
+"""
 
 while playing:
 	for event in pygame.event.get():
